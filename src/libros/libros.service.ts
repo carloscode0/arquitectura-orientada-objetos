@@ -3,9 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateLibroDto, CreatePrestamoLibroDto } from './dto/create-libro.dto';
+import { CreateLibroDto } from './dto/create-libro.dto';
 import { UpdateLibroDto } from './dto/update-libro.dto';
-import { LibroEntity, PrestamoEntity } from './entities/libro.entity';
+import {  LibroEntity } from './entities/libro.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { PaginacionDto } from './dto/Paginacion-dto';
@@ -15,8 +15,7 @@ export class LibrosService {
   constructor(
     @InjectRepository(LibroEntity)
     private repositoryLibro: Repository<LibroEntity>,
-    @InjectRepository(PrestamoEntity)
-    private repositoryPrestamo: Repository<PrestamoEntity>,
+    // private repositoryAutor: Repository<AutorEntity>,
   ) {}
 
   // Registrar libro
@@ -46,8 +45,7 @@ export class LibrosService {
   // Listar libros
   async findAll({ busqueda, pagina, limite }: PaginacionDto) {
     const [libros, totalreg] = await this.repositoryLibro.findAndCount({
-      // relations: ["relFacultad", "relidAreaVoc", "relidAreaVoc2"], //declarar relacion de tabl
-      // relations: ["relFacultad", "relMunicipio.relProvincia"],
+      relations: ["relAutor"], //declarar relacion
       skip: (pagina - 1) * limite, //saltar paginas
       take: limite, //limite de pagina
       where: busqueda ? [{ nombre: Like(`%${busqueda}%`) }] : undefined,
@@ -62,6 +60,16 @@ export class LibrosService {
       item.numero = numero++;
     }
     return { totalreg, totalpag, libros };
+  }
+
+  //listar un libro por id
+  async findOne(id: number) {
+    const libro = await this.repositoryLibro.findOne({
+      where: { id },
+    });
+
+    if (!libro) throw new ConflictException(`El libro con ${id} no existe.`);
+    return libro;
   }
 
   // actualizar libro
@@ -85,24 +93,13 @@ export class LibrosService {
     return await this.repositoryLibro.save(updateCarrera);
   }
 
-  // // registrar préstamo
-  async register(
-    createPrestamoLibroDto: CreatePrestamoLibroDto,
-  ): Promise<PrestamoEntity> {
-    const id = createPrestamoLibroDto.libro_id;
-    // verifica la existencia del libro
+  //eliminar libro
+  async remove(id: number): Promise<{ message: string }> {
     const existe = await this.repositoryLibro.findOne({ where: { id } });
     if (!existe)
-      throw new ConflictException(`El libro con el id: ${id} no existe.`);
+      throw new ConflictException(`El libro con ID: ${id} no existe.`);
 
-    // Registra nuevo libro
-    const newPrestamo = await this.repositoryPrestamo.save({
-      fecha: createPrestamoLibroDto.fecha,
-      lector: createPrestamoLibroDto.lector,
-      libro_id: createPrestamoLibroDto.libro_id,
-    });
-    console.log( "dtataAAA" ,newPrestamo);
-
-    return newPrestamo;
+    await this.repositoryLibro.delete(id);
+    return { message: `El libro con ID: ${id}, fue eliminado correctamente.` };
   }
 }

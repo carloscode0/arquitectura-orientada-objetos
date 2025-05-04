@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config'; // <-- Importar aquí
+import { ConfigModule } from '@nestjs/config';
 import { LibrosModule } from './libros/libros.module';
+import { AutorModule } from './autor/autor.module';
+import { PrestamoModule } from './prestamo/prestamo.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { LibrosModule } from './libros/libros.module';
       synchronize: true,
     }),
     LibrosModule,
+    AutorModule,
+    PrestamoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

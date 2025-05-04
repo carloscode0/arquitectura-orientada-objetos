@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { LibrosService } from './libros.service';
-import { CreateLibroDto, CreatePrestamoLibroDto } from './dto/create-libro.dto';
+import { CreateLibroDto } from './dto/create-libro.dto';
 import { UpdateLibroDto } from './dto/update-libro.dto';
 import {
   ApiCreatedResponse,
@@ -17,12 +17,21 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { PaginacionDto } from './dto/Paginacion-dto';
-import { LibroEntity, PrestamoEntity } from './entities/libro.entity';
+import { LibroEntity } from './entities/libro.entity';
 
 @Controller('libros')
 export class LibrosController {
   constructor(private readonly librosService: LibrosService) {}
 
+  // Registrar libro
+  @Post()
+  @ApiOperation({ summary: 'Registrar libro' })
+  @ApiCreatedResponse({ type: LibroEntity })
+  create(@Body() createLibroDto: CreateLibroDto): Promise<LibroEntity> {
+    return this.librosService.create(createLibroDto);
+  }
+
+  // Listar libros
   @Get()
   @ApiOperation({ summary: 'Listar libros' })
   @ApiOkResponse({ type: LibroEntity, isArray: true })
@@ -30,13 +39,15 @@ export class LibrosController {
     return this.librosService.findAll(paginacion);
   }
 
-  @Post()
-  @ApiOperation({ summary: 'Registrar libro' })
-  @ApiCreatedResponse({ type: LibroEntity })
-  create(@Body() createLibroDto: CreateLibroDto): Promise<LibroEntity> {
-    return this.librosService.create(createLibroDto); // ✅ Correcto
+  // Listar un libro por id
+  @Get(':id')
+  @ApiOperation({ summary: 'Listar un libro por id' })
+  @ApiOkResponse({ type: LibroEntity, isArray: true })
+  findOne(@Param('id') id: string) {
+    return this.librosService.findOne(+id);
   }
 
+  // Actualizar libro
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar libro' })
   @ApiOkResponse({ type: UpdateLibroDto })
@@ -47,12 +58,10 @@ export class LibrosController {
     return this.librosService.update(+id, updateInterpreteDto);
   }
 
-  @Post('prestamo')
-  @ApiOperation({ summary: 'Registrar préstamo' })
-  @ApiCreatedResponse({ type: PrestamoEntity })
-  createPrestamo(
-    @Body() createPrestamoLibroDto: CreatePrestamoLibroDto,
-  ): Promise<PrestamoEntity> {
-    return this.librosService.register(createPrestamoLibroDto);
+  // Eliminar libro
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar registro libro por id' })
+  remove(@Param('id') id: string) {
+    return this.librosService.remove(+id);
   }
 }
